@@ -8,7 +8,7 @@
 import UIKit
 
 class ViewController: UIViewController {
-
+    
     @IBOutlet weak var weatherImageView: UIImageView!
     @IBOutlet weak var tempLabel: UILabel!
     @IBOutlet weak var feelsLikeLabel: UILabel!
@@ -18,16 +18,27 @@ class ViewController: UIViewController {
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        networkWeatherManager.fetchCurrentWeather(city: "London")
-        networkWeatherManager.onCompletion = { currentWeather in
-            print(currentWeather.cityName)
+        
+        networkWeatherManager.onCompletion = { [weak self] currentWeather in
+            guard let self = self else { return }
+            self.updateInterfaceWith(weather: currentWeather)
         }
+        networkWeatherManager.fetchCurrentWeather(city: "London")
     }
     
     @IBAction func enterCityButton(_ sender: UIButton) {
-        presentSearchAlertController(withTitle: "Enter city's name", message: nil, style: .alert) { city in
+        presentSearchAlertController(withTitle: "Enter city's name", message: nil, style: .alert) {[unowned self] city in
             self.networkWeatherManager.fetchCurrentWeather(city: city)
             
+        }
+    }
+    
+    func updateInterfaceWith(weather: CurrentWeather) {
+        DispatchQueue.main.async {
+            self.cityLabel.text = weather.cityName
+            self.tempLabel.text = weather.tempString
+            self.feelsLikeLabel.text = weather.feelsLikeTempString
+            self.weatherImageView.image = UIImage(systemName: weather.systemIconNameString)
         }
     }
 }
